@@ -175,7 +175,7 @@ class Logistic(torch.distributions.Distribution):
     Logistic 分布
     '''
     def __init__(self):
-        super(self, self).__init__()
+        super(Logistic, self).__init__()
 
     def log_prob(self, x):
 

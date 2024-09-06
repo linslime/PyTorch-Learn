@@ -187,13 +187,13 @@ class Logistic(torch.distributions.Distribution):
         return torch.log(z) - torch.log(1. - z)
 if __name__ == '__main__':
     # 是否有闲置GPU
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     #先验分布
     proior = Logistic()
 
     #训练
-    train()
+    # train()
 
     #预测
     x=proior.sample((10,784))#采样

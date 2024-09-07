@@ -18,11 +18,11 @@ class PositionalEncoding(nn.Module):
             if pos != 0 else np.zeros(d_model) for pos in range(max_len)])
         pos_table[1:, 0::2] = np.sin(pos_table[1:, 0::2])           # 字嵌入维度为偶数时
         pos_table[1:, 1::2] = np.cos(pos_table[1:, 1::2])           # 字嵌入维度为奇数时
-        self.pos_table = torch.FloatTensor(pos_table).cuda()        # enc_inputs: [seq_len, d_model]
+        self.pos_table = torch.FloatTensor(pos_table)        # enc_inputs: [seq_len, d_model]
 
     def forward(self, enc_inputs):                                  # enc_inputs: [batch_size, seq_len, d_model]
         enc_inputs += self.pos_table[:enc_inputs.size(1), :]
-        return self.dropout(enc_inputs.cuda())
+        return self.dropout(enc_inputs)
 
 
 def get_attn_pad_mask(seq_q, seq_k):                                # seq_q: [batch_size, seq_len] ,seq_k: [batch_size, seq_len]
@@ -75,7 +75,7 @@ class MultiHeadAttention(nn.Module):
                                                                                     # attn: [batch_size, n_heads, len_q, len_k]
         context = context.transpose(1, 2).reshape(batch_size, -1, n_heads * d_v)    # context: [batch_size, len_q, n_heads * d_v]
         output = self.fc(context)                                                   # [batch_size, len_q, d_model]
-        return nn.LayerNorm(d_model).cuda()(output + residual), attn
+        return nn.LayerNorm(d_model)(output + residual), attn
 
 
 class PoswiseFeedForwardNet(nn.Module):
@@ -89,7 +89,7 @@ class PoswiseFeedForwardNet(nn.Module):
     def forward(self, inputs):                                  # inputs: [batch_size, seq_len, d_model]
         residual = inputs
         output = self.fc(inputs)
-        return nn.LayerNorm(d_model).cuda()(output + residual)  # [batch_size, seq_len, d_model]
+        return nn.LayerNorm(d_model)(output + residual)  # [batch_size, seq_len, d_model]
 
 
 class EncoderLayer(nn.Module):
@@ -159,11 +159,11 @@ class Decoder(nn.Module):
                                                                                     # enc_intpus: [batch_size, src_len]
                                                                                     # enc_outputs: [batsh_size, src_len, d_model]
         dec_outputs = self.tgt_emb(dec_inputs)                                      # [batch_size, tgt_len, d_model]
-        dec_outputs = self.pos_emb(dec_outputs).cuda()                              # [batch_size, tgt_len, d_model]
-        dec_self_attn_pad_mask = get_attn_pad_mask(dec_inputs, dec_inputs).cuda()   # [batch_size, tgt_len, tgt_len]
-        dec_self_attn_subsequence_mask = get_attn_subsequence_mask(dec_inputs).cuda()  # [batch_size, tgt_len, tgt_len]
+        dec_outputs = self.pos_emb(dec_outputs)                             # [batch_size, tgt_len, d_model]
+        dec_self_attn_pad_mask = get_attn_pad_mask(dec_inputs, dec_inputs)   # [batch_size, tgt_len, tgt_len]
+        dec_self_attn_subsequence_mask = get_attn_subsequence_mask(dec_inputs)  # [batch_size, tgt_len, tgt_len]
         dec_self_attn_mask = torch.gt((dec_self_attn_pad_mask +
-                                       dec_self_attn_subsequence_mask), 0).cuda()   # [batch_size, tgt_len, tgt_len]
+                                       dec_self_attn_subsequence_mask), 0)   # [batch_size, tgt_len, tgt_len]
         dec_enc_attn_mask = get_attn_pad_mask(dec_inputs, enc_inputs)               # [batc_size, tgt_len, src_len]
         dec_self_attns, dec_enc_attns = [], []
         for layer in self.layers:                                                   # dec_outputs: [batch_size, tgt_len, d_model]
@@ -179,9 +179,9 @@ class Decoder(nn.Module):
 class Transformer(nn.Module):
     def __init__(self):
         super(Transformer, self).__init__()
-        self.Encoder = Encoder().cuda()
-        self.Decoder = Decoder().cuda()
-        self.projection = nn.Linear(d_model, tgt_vocab_size, bias=False).cuda()
+        self.Encoder = Encoder()
+        self.Decoder = Decoder()
+        self.projection = nn.Linear(d_model, tgt_vocab_size, bias=False)
 
     def forward(self, enc_inputs, dec_inputs):                          # enc_inputs: [batch_size, src_len]
                                                                         # dec_inputs: [batch_size, tgt_len]

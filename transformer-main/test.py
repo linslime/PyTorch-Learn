@@ -18,8 +18,8 @@ enc_inputs, dec_inputs, dec_outputs = make_data()
 loader = Data.DataLoader(MyDataSet(enc_inputs, dec_inputs, dec_outputs), 2, True)
 enc_inputs, _, _ = next(iter(loader))
 model = torch.load('model.pth')
-predict_dec_input = test(model, enc_inputs[0].view(1, -1).cuda(), start_symbol=tgt_vocab["S"])
-predict, _, _, _ = model(enc_inputs[0].view(1, -1).cuda(), predict_dec_input)
+predict_dec_input = test(model, enc_inputs[0].view(1, -1), start_symbol=tgt_vocab["S"])
+predict, _, _, _ = model(enc_inputs[0].view(1, -1), predict_dec_input)
 predict = predict.data.max(1, keepdim=True)[1]
 
 print([src_idx2word[int(i)] for i in enc_inputs[0]], '->',
